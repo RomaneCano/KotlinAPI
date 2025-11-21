@@ -1,9 +1,11 @@
 package com.example.kotlinapi.presentation.screen
 
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
@@ -14,16 +16,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.example.kotlinapi.presentation.RecipeViewModel
+import com.journeyapps.barcodescanner.ScanContract
+import com.journeyapps.barcodescanner.ScanOptions
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     onRecipeSelected: (String, String) -> Unit,
     onFavoritesClick: () -> Unit,
+    onScanResult: (String) -> Unit,
     vm: RecipeViewModel = viewModel()
 ) {
     val state by vm.listState.collectAsState()
@@ -31,6 +35,17 @@ fun HomeScreen(
 
     // 🆕 Filtre Nutri-score : null = tous, sinon "a".."e"
     var selectedNutriScore by remember { mutableStateOf<String?>(null) }
+
+    // ⚙️ Launcher ZXing pour le scan
+    val scanLauncher = rememberLauncherForActivityResult(
+        contract = ScanContract(),
+        onResult = { result ->
+            val contents = result.contents
+            if (contents != null) {
+                onScanResult(contents)
+            }
+        }
+    )
 
     Scaffold(
         topBar = {
@@ -64,6 +79,29 @@ fun HomeScreen(
                     modifier = Modifier.fillMaxWidth(),
                     label = { Text("Rechercher un produit") }
                 )
+
+                // 🔍 Bouton scan code-barres / QR
+                Button(
+                    onClick = {
+                        val options = ScanOptions().apply {
+                            setDesiredBarcodeFormats(ScanOptions.ALL_CODE_TYPES)
+                            setPrompt("Scannez le code-barres ou QR du produit")
+                            setBeepEnabled(true)
+                            setOrientationLocked(true)
+                        }
+                        scanLauncher.launch(options)
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFFFB300),
+                        contentColor = Color.Black
+                    )
+                ) {
+                    Text("Scanner un produit")
+                }
 
                 // 🆕 Rangée de chips Nutri-score
                 NutriScoreFilterRow(
@@ -205,7 +243,7 @@ private fun NutriScoreFilterRow(
     }
 }
 
-// réutilisée ici aussi
+// Couleur par Nutri-score
 private fun nutriScoreColor(letter: String): Color {
     return when (letter.lowercase()) {
         "a" -> Color(0xFF2E7D32) // vert

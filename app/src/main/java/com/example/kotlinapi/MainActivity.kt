@@ -51,6 +51,10 @@ fun IHM(navController: NavHostController) {
                 },
                 onFavoritesClick = {
                     navController.navigate("favorites")
+                },
+                onScanResult = { scannedCode ->
+                    // redirection automatique vers la fiche produit scannée
+                    navController.navigate("detail/$scannedCode/$scannedCode")
                 }
             )
         }
