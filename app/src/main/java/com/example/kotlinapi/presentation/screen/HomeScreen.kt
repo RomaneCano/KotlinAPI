@@ -29,6 +29,9 @@ fun HomeScreen(
     val state by vm.listState.collectAsState()
     var query by remember { mutableStateOf(TextFieldValue("")) }
 
+    // 🆕 Filtre Nutri-score : null = tous, sinon "a".."e"
+    var selectedNutriScore by remember { mutableStateOf<String?>(null) }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -62,6 +65,12 @@ fun HomeScreen(
                     label = { Text("Rechercher un produit") }
                 )
 
+                // 🆕 Rangée de chips Nutri-score
+                NutriScoreFilterRow(
+                    selected = selectedNutriScore,
+                    onSelectedChange = { selectedNutriScore = it }
+                )
+
                 when {
                     state.isLoading -> {
                         Box(Modifier.fillMaxSize()) {
@@ -74,11 +83,20 @@ fun HomeScreen(
                     }
 
                     else -> {
+                        // 🧮 On applique le filtre Nutri-score côté UI
+                        val filteredRecipes = state.recipes.filter { recipe ->
+                            selectedNutriScore == null ||
+                                    recipe.nutriScore?.equals(
+                                        selectedNutriScore,
+                                        ignoreCase = true
+                                    ) == true
+                        }
+
                         LazyColumn(
                             verticalArrangement = Arrangement.spacedBy(8.dp),
-                            contentPadding = PaddingValues(bottom = 100.dp) // marge pour le gros bouton
+                            contentPadding = PaddingValues(bottom = 100.dp) // pour le gros bouton
                         ) {
-                            items(state.recipes, key = { it.id }) { recipe ->
+                            items(filteredRecipes, key = { it.id }) { recipe ->
                                 Surface(
                                     tonalElevation = 2.dp,
                                     modifier = Modifier
@@ -101,11 +119,28 @@ fun HomeScreen(
                                                 .padding(end = 12.dp),
                                             contentScale = ContentScale.Crop
                                         )
-                                        Column {
+                                        Column(
+                                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                                        ) {
                                             Text(
                                                 recipe.name,
                                                 style = MaterialTheme.typography.titleMedium
                                             )
+
+                                            // petit rappel du Nutri-score si dispo
+                                            recipe.nutriScore?.let { ns ->
+                                                AssistChip(
+                                                    onClick = { /* rien, juste info */ },
+                                                    label = {
+                                                        Text("Nutri-score : ${ns.uppercase()}")
+                                                    },
+                                                    colors = AssistChipDefaults.assistChipColors(
+                                                        containerColor = nutriScoreColor(ns)
+                                                            .copy(alpha = 0.2f),
+                                                        labelColor = Color.Black
+                                                    )
+                                                )
+                                            }
                                         }
                                     }
                                 }
@@ -115,7 +150,7 @@ fun HomeScreen(
                 }
             }
 
-            // Gros bouton "Découvrir un produit" en bas
+            // 🔥 Gros bouton "Découvrir un produit" en bas
             Button(
                 onClick = { vm.loadRandomRecipe() },
                 modifier = Modifier
@@ -135,5 +170,49 @@ fun HomeScreen(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun NutriScoreFilterRow(
+    selected: String?,
+    onSelectedChange: (String?) -> Unit
+) {
+    val options = listOf<String?>(null, "a", "b", "c", "d", "e")
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        options.forEach { value ->
+            val isSelected = selected == value
+            val label = value?.uppercase() ?: "Tous"
+
+            FilterChip(
+                selected = isSelected,
+                onClick = {
+                    onSelectedChange(
+                        if (isSelected) null else value
+                    )
+                },
+                label = { Text(label) },
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = Color(0xFFFFB300),
+                    selectedLabelColor = Color.Black
+                )
+            )
+        }
+    }
+}
+
+// réutilisée ici aussi
+private fun nutriScoreColor(letter: String): Color {
+    return when (letter.lowercase()) {
+        "a" -> Color(0xFF2E7D32) // vert
+        "b" -> Color(0xFF388E3C)
+        "c" -> Color(0xFFFBC02D) // jaune
+        "d" -> Color(0xFFF57C00) // orange
+        "e" -> Color(0xFFD32F2F) // rouge
+        else -> Color(0xFF9E9E9E) // gris
     }
 }

@@ -171,6 +171,81 @@ fun DetailScreen(
                             fontWeight = FontWeight.SemiBold
                         )
                         Text(recipe.instructions ?: "Instructions non disponibles.")
+
+                        // 🧾 Analyse nutritionnelle
+                        val nutrition = recipe.nutrition
+                        val nutriScore = recipe.nutriScore
+
+                        if (nutrition != null || nutriScore != null) {
+                            Spacer(Modifier.height(16.dp))
+
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = Color(0xFFFFFDE7) // jaune très pâle
+                                ),
+                                elevation = CardDefaults.cardElevation(2.dp)
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(12.dp),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Text(
+                                        text = "Analyse nutritionnelle (pour 100 g)",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+
+                                    // Nutri-score
+                                    nutriScore?.let { ns ->
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text("Nutri-score : ")
+
+                                            Box(
+                                                modifier = Modifier
+                                                    .padding(start = 4.dp)
+                                                    .background(
+                                                        color = nutriScoreColor(ns),
+                                                        shape = MaterialTheme.shapes.small
+                                                    )
+                                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                                            ) {
+                                                Text(
+                                                    text = ns.uppercase(),
+                                                    color = Color.White,
+                                                    style = MaterialTheme.typography.bodyMedium
+                                                )
+                                            }
+                                        }
+                                    }
+
+                                    // Valeurs nutritionnelles
+                                    nutrition?.let { n ->
+                                        Column(
+                                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                                        ) {
+                                            n.energyKcal100g?.let {
+                                                Text("• Énergie : ${it.toInt()} kcal")
+                                            }
+                                            n.fat100g?.let {
+                                                Text("• Lipides : ${"%.1f".format(it)} g")
+                                            }
+                                            n.saturatedFat100g?.let {
+                                                Text("• Dont acides gras saturés : ${"%.1f".format(it)} g")
+                                            }
+                                            n.sugars100g?.let {
+                                                Text("• Sucres : ${"%.1f".format(it)} g")
+                                            }
+                                            n.salt100g?.let {
+                                                Text("• Sel : ${"%.2f".format(it)} g")
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
 
@@ -182,5 +257,16 @@ fun DetailScreen(
                 }
             }
         }
+    }
+}
+
+private fun nutriScoreColor(letter: String): Color {
+    return when (letter.lowercase()) {
+        "a" -> Color(0xFF2E7D32) // vert
+        "b" -> Color(0xFF388E3C)
+        "c" -> Color(0xFFFBC02D) // jaune
+        "d" -> Color(0xFFF57C00) // orange
+        "e" -> Color(0xFFD32F2F) // rouge
+        else -> Color(0xFF9E9E9E) // gris
     }
 }

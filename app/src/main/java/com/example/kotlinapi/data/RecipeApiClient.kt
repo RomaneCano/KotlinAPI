@@ -1,6 +1,7 @@
 package com.example.kotlinapi.data
 
 import android.util.Log
+import com.example.kotlinapi.model.NutritionInfo
 import com.example.kotlinapi.model.Recipe
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
@@ -11,7 +12,6 @@ import io.ktor.client.request.parameter
 import io.ktor.client.statement.bodyAsText
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
-import org.json.JSONArray
 import org.json.JSONObject
 import kotlin.random.Random
 
@@ -49,9 +49,7 @@ object RecipeApiClient {
                 parameter("page_size", 20)
             }.bodyAsText()
 
-            // ---- PARSING JSON SANS parseToJsonElement ----
             val root = JSONObject(responseText)
-
             val productsArray = root.optJSONArray("products") ?: return emptyList()
 
             (0 until productsArray.length()).mapNotNull { idx ->
@@ -65,7 +63,8 @@ object RecipeApiClient {
                 val countries = obj.optString("countries", null)
                 val thumb = obj.optString("image_front_small_url", null)
 
-                val ingredientsText = obj.optString("ingredients_text_fr",
+                val ingredientsText = obj.optString(
+                    "ingredients_text_fr",
                     obj.optString("ingredients_text", "")
                 )
 
@@ -74,6 +73,10 @@ object RecipeApiClient {
                     .map { it.trim() }
                     .filter { it.isNotBlank() }
 
+                // 🟩 Nutri-score dans la liste aussi
+                val nutriScore = obj.optString("nutriscore_grade", null)
+                    ?.takeIf { it.isNotBlank() }
+
                 Recipe(
                     id = code,
                     name = name,
@@ -81,13 +84,15 @@ object RecipeApiClient {
                     category = categories,
                     area = countries,
                     instructions = "Produit alimentaire (OpenFoodFacts)",
-                    ingredients = ingredients
+                    ingredients = ingredients,
+                    nutriScore = nutriScore,
+                    nutrition = null // on ne charge le détail nutritionnel que dans fetchRecipeDetail
                 )
             }
 
         } catch (e: Exception) {
             Log.e("RecipeApiClient", "Erreur lors de l'appel OpenFoodFacts", e)
-            emptyList()  // plus de fallback
+            emptyList()
         }
     }
 
@@ -121,6 +126,46 @@ object RecipeApiClient {
                 .map { it.trim() }
                 .filter { it.isNotBlank() }
 
+            // 🟩 Nutri-score
+            val nutriScore = product.optString("nutriscore_grade", null)
+                ?.takeIf { it.isNotBlank() }
+
+            // 🍽️ Nutriments sur 100g
+            val nutrimentsObj = product.optJSONObject("nutriments")
+
+            val energyKcal100g = nutrimentsObj?.optDouble("energy-kcal_100g", Double.NaN)
+                ?.let { if (it.isNaN()) null else it }
+
+            val fat100g = nutrimentsObj?.optDouble("fat_100g", Double.NaN)
+                ?.let { if (it.isNaN()) null else it }
+
+            val saturatedFat100g = nutrimentsObj?.optDouble("saturated-fat_100g", Double.NaN)
+                ?.let { if (it.isNaN()) null else it }
+
+            val sugars100g = nutrimentsObj?.optDouble("sugars_100g", Double.NaN)
+                ?.let { if (it.isNaN()) null else it }
+
+            val salt100g = nutrimentsObj?.optDouble("salt_100g", Double.NaN)
+                ?.let { if (it.isNaN()) null else it }
+
+            val nutrition = if (
+                energyKcal100g != null ||
+                fat100g != null ||
+                saturatedFat100g != null ||
+                sugars100g != null ||
+                salt100g != null
+            ) {
+                NutritionInfo(
+                    energyKcal100g = energyKcal100g,
+                    fat100g = fat100g,
+                    saturatedFat100g = saturatedFat100g,
+                    sugars100g = sugars100g,
+                    salt100g = salt100g
+                )
+            } else {
+                null
+            }
+
             Recipe(
                 id = code,
                 name = name,
@@ -128,7 +173,9 @@ object RecipeApiClient {
                 category = categories,
                 area = countries,
                 instructions = "Produit alimentaire (OpenFoodFacts)",
-                ingredients = ingredients
+                ingredients = ingredients,
+                nutriScore = nutriScore,
+                nutrition = nutrition
             )
 
         } catch (e: Exception) {
