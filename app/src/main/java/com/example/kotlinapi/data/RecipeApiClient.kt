@@ -113,8 +113,8 @@ object RecipeApiClient {
                 )
             }
         } catch (e: Exception) {
-                Log.e("RecipeApiClient", "Erreur lors de l'appel OpenFoodFacts", e)
-                fallbackRecipes
+            Log.e("RecipeApiClient", "Erreur lors de l'appel OpenFoodFacts", e)
+            fallbackRecipes
         }
     }
 

@@ -1,24 +1,29 @@
 package com.example.kotlinapi.presentation.screen
 
-import androidx.compose.foundation.clickable
+import android.net.Uri
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import com.example.kotlinapi.presentation.FavoriteRecipeViewModel
 import coil.compose.AsyncImage
-import androidx.compose.ui.layout.ContentScale
+import com.example.kotlinapi.presentation.FavoriteRecipeViewModel
 
-
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun FavoritesScreen(
     navController: NavHostController,
@@ -38,51 +43,164 @@ fun FavoritesScreen(
             )
         }
     ) { pad ->
-        Column(
+        Box(
             modifier = Modifier
                 .padding(pad)
-                .padding(16.dp)
                 .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        listOf(
+                            Color(0xFFFFF8E1), // jaune clair
+                            Color(0xFFFFECB3)  // jaune orangé
+                        )
+                    )
+                )
+                .padding(16.dp)
         ) {
             if (favorites.isEmpty()) {
-                Text("Aucun produit pour l'instant.")
-            } else {
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                // Message stylé quand il n’y a aucun favori
+                Card(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .padding(24.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color(0xFFFFFDF5)
+                    ),
+                    elevation = CardDefaults.cardElevation(6.dp)
                 ) {
-                    items(favorites, key = { it.id }) { fav ->
-                        Surface(
-                            tonalElevation = 2.dp,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    navController.navigate("detail/${fav.id}/${fav.name}")
-                                }
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .padding(12.dp)
-                                    .fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically
+                    Column(
+                        modifier = Modifier.padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            "Aucun produit pour l'instant.",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = Color(0xFFF57C00)
+                        )
+                        Text(
+                            "Ajoutez des favoris depuis les fiches produits.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(top = 8.dp)
+                        )
+                    }
+                }
+            } else {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    // 🔸 CAROUSEL
+                    val pagerState = rememberPagerState(pageCount = { favorites.size })
 
+                    HorizontalPager(
+                        state = pagerState,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(320.dp)
+                    ) { page ->
+                        val fav = favorites[page]
+
+                        Card(
+                            modifier = Modifier.fillMaxSize(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = Color(0xFFFFFDF5)
+                            ),
+                            elevation = CardDefaults.cardElevation(8.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
                             ) {
                                 AsyncImage(
                                     model = fav.thumbnailUrl,
                                     contentDescription = fav.name,
                                     modifier = Modifier
-                                        .size(64.dp)
-                                        .padding(end = 12.dp),
+                                        .fillMaxWidth()
+                                        .height(190.dp),
                                     contentScale = ContentScale.Crop
                                 )
 
                                 Text(
-                                    fav.name,
-                                    style = MaterialTheme.typography.titleMedium
+                                    text = fav.name,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = Color(0xFFF57C00)
                                 )
+
+                                Button(
+                                    onClick = {
+                                        val encodedName = Uri.encode(fav.name)
+                                        navController.navigate("detail/${fav.id}/$encodedName")
+                                    },
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Color(0xFFFFB300),
+                                        contentColor = Color.Black
+                                    )
+                                ) {
+                                    Text("Voir le produit")
+                                }
                             }
                         }
                     }
 
+                    // 🔹 Indicateurs de pages (petits points)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        repeat(favorites.size) { index ->
+                            val selected = pagerState.currentPage == index
+                            Box(
+                                modifier = Modifier
+                                    .padding(4.dp)
+                                    .size(if (selected) 10.dp else 8.dp)
+                                    .background(
+                                        color = if (selected) Color(0xFFF57C00) else Color(0xFFFFCC80),
+                                        shape = MaterialTheme.shapes.small
+                                    )
+                            )
+                        }
+                    }
+
+                    // 🔹 Liste des favoris en dessous (vue “compacte”)
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        items(favorites, key = { it.id }) { fav ->
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = Color(0xFFFFFDF5)
+                                ),
+                                elevation = CardDefaults.cardElevation(2.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(10.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    AsyncImage(
+                                        model = fav.thumbnailUrl,
+                                        contentDescription = fav.name,
+                                        modifier = Modifier
+                                            .size(56.dp)
+                                            .padding(end = 10.dp),
+                                        contentScale = ContentScale.Crop
+                                    )
+
+                                    Text(
+                                        text = fav.name,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = Color(0xFF5D4037)
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }

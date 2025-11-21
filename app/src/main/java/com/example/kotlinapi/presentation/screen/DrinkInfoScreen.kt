@@ -1,22 +1,15 @@
 package com.example.kotlinapi.presentation.screen
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -30,10 +23,8 @@ fun DrinkInfoScreen(
     navController: NavHostController,
     vm: DrinkInfoViewModel = viewModel()
 ) {
-    // On observe l'état exposé par le ViewModel
     val state by vm.state.collectAsState()
 
-    // À chaque nouvel "ingredient", on (re)charge la boisson correspondante
     LaunchedEffect(ingredient) {
         vm.load(ingredient)
     }
@@ -56,8 +47,16 @@ fun DrinkInfoScreen(
         Box(
             modifier = Modifier
                 .padding(pad)
-                .padding(16.dp)
                 .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0xFFFFF8E1),
+                            Color(0xFFFFECB3)
+                        )
+                    )
+                )
+                .padding(16.dp)
         ) {
             when {
                 state.isLoading -> {
@@ -76,33 +75,39 @@ fun DrinkInfoScreen(
 
                 state.drink != null -> {
                     val drink = state.drink!!
-                    Column(
+
+                    Card(
                         modifier = Modifier
-                            .fillMaxSize()
-                            .padding(bottom = 16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                            .align(Alignment.TopCenter)
+                            .fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color(0xFFFFFDF5)
+                        ),
+                        elevation = CardDefaults.cardElevation(6.dp)
                     ) {
-                        AsyncImage(
-                            model = drink.thumbnailUrl,
-                            contentDescription = drink.name,
+                        Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(220.dp)
-                        )
-
-                        Text(
-                            text = drink.name,
-                            style = MaterialTheme.typography.titleLarge
-                        )
-
-                        if (!drink.instructions.isNullOrBlank()) {
-                            Text(
-                                text = drink.instructions!!,
-                                style = MaterialTheme.typography.bodyMedium
+                                .padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            AsyncImage(
+                                model = drink.thumbnailUrl,
+                                contentDescription = drink.name,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(220.dp)
                             )
-                        } else {
+
                             Text(
-                                text = "Pas d'instructions détaillées.",
+                                text = drink.name,
+                                style = MaterialTheme.typography.titleLarge,
+                                color = Color(0xFFF57C00) // bel orange
+                            )
+
+                            Text(
+                                text = drink.instructions ?: "Pas d'instructions détaillées.",
                                 style = MaterialTheme.typography.bodyMedium
                             )
                         }

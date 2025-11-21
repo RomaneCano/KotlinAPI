@@ -1,12 +1,17 @@
 package com.example.kotlinapi.presentation.screen
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -47,23 +52,36 @@ fun DetailScreen(
         Box(
             modifier = Modifier
                 .padding(pad)
-                .padding(16.dp)
                 .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0xFFFFF8E1), // jaune très clair
+                            Color(0xFFFFECB3)  // jaune-orangé
+                        )
+                    )
+                )
+                .padding(16.dp)
         ) {
             when {
                 detailState.isLoading -> {
                     CircularProgressIndicator(Modifier.align(Alignment.Center))
                 }
+
                 detailState.error != null -> {
                     Text(
                         text = "Erreur : ${detailState.error}",
                         modifier = Modifier.align(Alignment.Center)
                     )
                 }
+
                 detailState.recipe != null -> {
                     val recipe = detailState.recipe!!
+
                     Column(
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState()),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         AsyncImage(
@@ -71,30 +89,59 @@ fun DetailScreen(
                             contentDescription = recipe.name,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(200.dp)
+                                .height(220.dp)
                         )
 
+                        Text(
+                            text = recipe.name,
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold
+                        )
+
+                        // Ingrédient principal pour la boisson recommandée
+                        val mainIngredient = recipe.ingredients.firstOrNull() ?: recipe.name
+
+                        // 🔸 Ligne de boutons (orange/jaune)
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Text(
-                                text = recipe.name,
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold
-                            )
+                            Button(
+                                onClick = {
+                                    navController.navigate("drinkInfo/$mainIngredient")
+                                },
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFFFFB300), // orange soutenu
+                                    contentColor = Color.Black
+                                )
+                            ) {
+                                Text("Boisson recommandée")
+                            }
 
                             Button(
                                 onClick = {
                                     if (isFav) {
-                                        favVm.removeFavorite(recipe.id, recipe.name, recipe.thumbnailUrl)
+                                        favVm.removeFavorite(
+                                            recipe.id,
+                                            recipe.name,
+                                            recipe.thumbnailUrl
+                                        )
                                     } else {
-                                        favVm.addFavorite(recipe.id, recipe.name, recipe.thumbnailUrl)
+                                        favVm.addFavorite(
+                                            recipe.id,
+                                            recipe.name,
+                                            recipe.thumbnailUrl
+                                        )
                                     }
-                                }
+                                },
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (isFav) Color(0xFFFFD54F) else Color(0xFFFFF176),
+                                    contentColor = Color.Black
+                                )
                             ) {
-                                Text(if (isFav) "- favoris" else "+ favoris")
+                                Text(if (isFav) "Retirer des favoris" else "Ajouter aux favoris")
                             }
                         }
 
@@ -105,9 +152,12 @@ fun DetailScreen(
                             Text("Origine : $it")
                         }
 
+                        Spacer(Modifier.height(8.dp))
+
                         Text(
                             text = "Ingrédients :",
-                            style = MaterialTheme.typography.titleMedium
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold
                         )
                         recipe.ingredients.forEach { ing ->
                             Text("- $ing")
@@ -117,25 +167,13 @@ fun DetailScreen(
 
                         Text(
                             text = "Instructions :",
-                            style = MaterialTheme.typography.titleMedium
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold
                         )
                         Text(recipe.instructions ?: "Instructions non disponibles.")
-
-                        Spacer(Modifier.height(16.dp))
-
-                        val mainIngredient = recipe.ingredients.firstOrNull()
-                        if (mainIngredient != null) {
-                            Button(
-                                onClick = {
-                                    navController.navigate("drinkInfo/$mainIngredient")
-                                },
-                                modifier = Modifier.align(Alignment.CenterHorizontally)
-                            ) {
-                                Text("Boisson recommandée")
-                            }
-                        }
                     }
                 }
+
                 else -> {
                     Text(
                         text = "Aucune donnée pour ce produit.",
