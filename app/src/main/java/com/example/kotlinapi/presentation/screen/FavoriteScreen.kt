@@ -3,6 +3,7 @@ package com.example.kotlinapi.presentation.screen
 import android.net.Uri
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -10,6 +11,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,7 +25,10 @@ import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import com.example.kotlinapi.presentation.FavoriteRecipeViewModel
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@OptIn(
+    ExperimentalMaterial3Api::class,
+    ExperimentalFoundationApi::class
+)
 @Composable
 fun FavoritesScreen(
     navController: NavHostController,
@@ -50,15 +55,16 @@ fun FavoritesScreen(
                 .background(
                     Brush.verticalGradient(
                         listOf(
-                            Color(0xFFFFF8E1), // jaune clair
-                            Color(0xFFFFECB3)  // jaune orangé
+                            Color(0xFFFFF8E1),
+                            Color(0xFFFFECB3)
                         )
                     )
                 )
                 .padding(16.dp)
         ) {
+
             if (favorites.isEmpty()) {
-                // Message stylé quand il n’y a aucun favori
+                // État vide
                 Card(
                     modifier = Modifier
                         .align(Alignment.Center)
@@ -84,12 +90,15 @@ fun FavoritesScreen(
                         )
                     }
                 }
+
             } else {
+
                 Column(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    // 🔸 CAROUSEL
+
+                    // 🔸 CAROUSEL EN HAUT
                     val pagerState = rememberPagerState(pageCount = { favorites.size })
 
                     HorizontalPager(
@@ -129,23 +138,44 @@ fun FavoritesScreen(
                                     color = Color(0xFFF57C00)
                                 )
 
-                                Button(
-                                    onClick = {
-                                        val encodedName = Uri.encode(fav.name)
-                                        navController.navigate("detail/${fav.id}/$encodedName")
-                                    },
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = Color(0xFFFFB300),
-                                        contentColor = Color.Black
-                                    )
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                                 ) {
-                                    Text("Voir le produit")
+                                    Button(
+                                        onClick = {
+                                            val encodedName = Uri.encode(fav.name)
+                                            navController.navigate("detail/${fav.id}/$encodedName")
+                                        },
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = Color(0xFFFFB300),
+                                            contentColor = Color.Black
+                                        )
+                                    ) {
+                                        Text("Voir le produit")
+                                    }
+
+                                    OutlinedButton(
+                                        onClick = {
+                                            vm.removeFavorite(fav.id, fav.name, fav.thumbnailUrl)
+                                        },
+                                        colors = ButtonDefaults.outlinedButtonColors(
+                                            contentColor = Color(0xFFD32F2F)
+                                        )
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Delete,
+                                            contentDescription = "Supprimer",
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                        Spacer(Modifier.width(4.dp))
+                                        Text("Supprimer")
+                                    }
                                 }
                             }
                         }
                     }
 
-                    // 🔹 Indicateurs de pages (petits points)
+                    // 🔹 Indicateurs du carousel
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.Center
@@ -164,14 +194,19 @@ fun FavoritesScreen(
                         }
                     }
 
-                    // 🔹 Liste des favoris en dessous (vue “compacte”)
+                    // 🔹 LISTE DES FAVORIS EN DESSOUS
                     LazyColumn(
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                         modifier = Modifier.weight(1f)
                     ) {
                         items(favorites, key = { it.id }) { fav ->
                             Card(
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        val encodedName = Uri.encode(fav.name)
+                                        navController.navigate("detail/${fav.id}/$encodedName")
+                                    },
                                 colors = CardDefaults.cardColors(
                                     containerColor = Color(0xFFFFFDF5)
                                 ),
@@ -195,8 +230,21 @@ fun FavoritesScreen(
                                     Text(
                                         text = fav.name,
                                         style = MaterialTheme.typography.bodyMedium,
-                                        color = Color(0xFF5D4037)
+                                        color = Color(0xFF5D4037),
+                                        modifier = Modifier.weight(1f)
                                     )
+
+                                    IconButton(
+                                        onClick = {
+                                            vm.removeFavorite(fav.id, fav.name, fav.thumbnailUrl)
+                                        }
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Delete,
+                                            contentDescription = "Supprimer",
+                                            tint = Color(0xFFD32F2F)
+                                        )
+                                    }
                                 }
                             }
                         }

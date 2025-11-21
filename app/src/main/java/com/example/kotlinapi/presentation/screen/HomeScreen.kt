@@ -11,12 +11,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.kotlinapi.presentation.RecipeViewModel
 import coil.compose.AsyncImage
-import androidx.compose.ui.layout.ContentScale
+import com.example.kotlinapi.presentation.RecipeViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -67,13 +68,15 @@ fun HomeScreen(
                             CircularProgressIndicator(Modifier.align(Alignment.Center))
                         }
                     }
+
                     state.error != null -> {
                         Text("Erreur : ${state.error}")
                     }
+
                     else -> {
                         LazyColumn(
                             verticalArrangement = Arrangement.spacedBy(8.dp),
-                            contentPadding = PaddingValues(bottom = 80.dp) // pour ne pas être caché par le bouton
+                            contentPadding = PaddingValues(bottom = 100.dp) // marge pour le gros bouton
                         ) {
                             items(state.recipes, key = { it.id }) { recipe ->
                                 Surface(
@@ -112,19 +115,24 @@ fun HomeScreen(
                 }
             }
 
-            // 🔥 Nouveau bouton "Découvrir un produit" en bas, orange, bien visible
+            // Gros bouton "Découvrir un produit" en bas
             Button(
                 onClick = { vm.loadRandomRecipe() },
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .padding(16.dp)
-                    .fillMaxWidth(),
+                    .fillMaxWidth()
+                    .height(68.dp),
+                shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color(0xFFFFA726), // orange soutenu
                     contentColor = Color.White
                 )
             ) {
-                Text("Découvrir un produit", style = MaterialTheme.typography.titleMedium)
+                Text(
+                    "Découvrir un produit",
+                    style = MaterialTheme.typography.titleLarge
+                )
             }
         }
     }

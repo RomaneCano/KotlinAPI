@@ -12,7 +12,7 @@ import kotlinx.serialization.json.Json
 import org.json.JSONArray
 import org.json.JSONObject
 import java.text.Normalizer
-import kotlin.math.abs
+import kotlin.random.Random
 
 object DrinkApiClient {
 
@@ -48,8 +48,8 @@ object DrinkApiClient {
         "Water","Soda water","Tonic water","Cola","Ginger ale","Ginger beer"
     )
 
+    // mapping FR -> ingrédients officiels
     private val directMap = mapOf(
-        // FR → ingrédients officiels exacts
         "fraise" to "Strawberries",
         "fraises" to "Strawberries",
         "framboise" to "Raspberries",
@@ -121,11 +121,27 @@ object DrinkApiClient {
     private fun mapToKnownIngredient(input: String): String {
         val lower = input.lowercase().trim()
 
+        // 1️⃣ mapping direct FR -> officiel
         directMap[lower]?.let { return it }
 
+        // 2️⃣ cas spéciaux plats préparés
+        if ("salade" in lower && "compose" in lower) {
+            return "Soda water"
+        }
+        if (("pate" in lower || "pates" in lower || "pâte" in lower) &&
+            ("bolo" in lower || "bolognaise" in lower)
+        ) {
+            return "Red wine"
+        }
+        if ("yaourt" in lower || "yoghurt" in lower || "yogurt" in lower) {
+            return "Milk"
+        }
+
+        // 3️⃣ tentative par inclusion dans la liste officielle
         officialIngredients.firstOrNull { it.lowercase().contains(lower) }
             ?.let { return it }
 
+        // 4️⃣ fallback générique
         return when {
             "fruit" in lower -> "Orange juice"
             "legume" in lower -> "Tomato juice"
@@ -161,22 +177,27 @@ object DrinkApiClient {
             val root = JSONObject(responseText)
             val drinksAny = root.opt("drinks") ?: return null
 
+            // cas "no data found"
             if (drinksAny is String) return null
 
             if (drinksAny is JSONArray && drinksAny.length() > 0) {
 
-                // 🎯 Sélection NON alphabétique
-                // -> cocktail choisi via hashcode (stable mais varié)
+                // 🎲 Sélection ALÉATOIRE d’un cocktail parmi ceux trouvés
                 val size = drinksAny.length()
-                val index = abs(sanitized.hashCode()) % size
-                val obj = drinksAny.getJSONObject(index)
+                val index = Random.nextInt(size)
+                val obj = drinksAny.optJSONObject(index) ?: return null
+
+                val name = obj.optString("strDrink", sanitized)
+                val thumb = obj.optString("strDrinkThumb", null)
 
                 Drink(
-                    name = obj.optString("strDrink", sanitized),
+                    name = name,
                     instructions = "Boisson contenant : $sanitized",
-                    thumbnailUrl = obj.optString("strDrinkThumb", null)
+                    thumbnailUrl = thumb
                 )
-            } else null
+            } else {
+                null
+            }
 
         } catch (_: Exception) {
             null
