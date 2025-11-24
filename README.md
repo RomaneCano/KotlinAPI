@@ -1,119 +1,130 @@
-# 🍊 KotlinAPI – Produits alimentaires & boissons recommandées
+# 🍊 KotlinAPI – Produits alimentaires, Scanner & Boissons recommandées
 
 Application Android développée en **Kotlin** avec **Jetpack Compose**, permettant de :
 
 - 🔎 Rechercher des **produits alimentaires** depuis l’API **OpenFoodFacts**
-- ⭐ Gérer une liste de **produits favoris** (persistés en local avec Room)
-- 🥤 Obtenir une **boisson recommandée** pour un produit, grâce à l’API **TheCocktailDB**
-- 📱 Naviguer entre un **écran d’accueil**, un **détail produit**, un **écran favoris** et un **écran boisson**
+- ⭐ Gérer des **produits favoris** (persistance Room)
+- 🥤 Obtenir une **boisson recommandée** grâce à **TheCocktailDB**
+- 📸 Scanner un **QR Code ou code-barres** pour retrouver un produit instantanément
+- 🧪 Visualiser une **analyse nutritionnelle complète**
+- 🅰️ Filtrer par **Nutri-Score**
+- 🎨 Profiter d'une UI moderne **orange / jaune**, fluide et responsive
 
 ---
 
 ## 📸 Aperçu des fonctionnalités
 
-### 🏠 Écran d’accueil (Home)
+---
 
-- Champ de recherche : filtrage des produits via **OpenFoodFacts**
-- Liste de résultats :
-  - Affichage du **nom** et de la **photo** du produit
-  - Clic sur un produit → ouverture de la **fiche détaillée**
-- Bouton CTA (Call To Action) en bas de l’écran :
-  - **« Découvrir un produit »** → charge un produit **aléatoire** via OpenFoodFacts
+## 🏠 Écran d’accueil (Home)
 
-### 📄 Écran détail produit
+- Champ de recherche connecté à OpenFoodFacts  
+- Résultats avec **image + nom + Nutri-Score**  
+- Filtre Nutri-Score (A→E)  
+- **Scanner un produit** : code-barres & QR grâce à ZXing  
+- CTA : **Découvrir un produit** (aléatoire)
+
+---
+
+## 📄 Écran détail produit
 
 Pour chaque produit sélectionné :
 
-- Image du produit (thumbnail)
-- Nom, catégorie, pays d’origine
-- Liste des **ingrédients**
-- Bouton **« + favoris / - favoris »**
-  - Permet d’ajouter ou retirer le produit de la base locale Room
-- Bouton **« Boisson recommandée »** :
-  - Utilise le premier ingrédient (ou un fallback) pour interroger l’API **TheCocktailDB**
-  - Navigation vers l’écran **DrinkInfo**
-
-### ⭐ Écran favoris
-
-- Fond dégradé **jaune/orange**
-- **Carousel** en haut :
-  - Swipe horizontal entre les produits favoris
-  - Grande image + nom
-  - Bouton **« Voir le produit »** pour revenir à l’écran détail
-- Liste des favoris en dessous :
-  - Affichage compact : image + nom
-  - Bouton **poubelle** pour supprimer un favori
-- Message stylé lorsque la liste est vide :
-  - _"Aucun produit pour l'instant. Ajoutez des favoris depuis les fiches produits."_
-
-### 🥤 Écran boisson recommandée
-
-Pour un ingrédient donné :
-
-- Appel à l’API **TheCocktailDB**
-- Nettoyage de l’ingrédient (suppression des accents, parenthèses, etc.)
-- **Mapping intelligent** FR → EN (et quelques alias) pour matcher les ingrédients de la base TheCocktailDB
-- Sélection **aléatoire** d’une boisson parmi celles disponibles pour l’ingrédient
-- Affichage :
-  - Image du cocktail
-  - Nom de la boisson
-  - Texte du type _« Boisson contenant : [ingrédient] »_
-- Gestion des erreurs :
-  - Spinner de chargement
-  - Message si aucune boisson n’est trouvée ou en cas d’erreur API
+- 📷 Image
+- 🏷 Nom, catégories, origine
+- 🧾 Ingrédients
+- 🅰️ Nutri-Score codé couleur
+- 🧪 Analyse nutritionnelle :
+  - calories
+  - sucres
+  - graisses
+  - sel
+  - additifs
+- ⭐ Ajouter / retirer des favoris  
+- 🥤 **Boisson recommandée** → basée sur le premier ingrédient
 
 ---
 
-## 🏗️ Architecture & organisation
+## ⭐ Écran favoris
 
-L’application suit une structure simple en plusieurs couches :
-
-- **data/**
-  - Clients API Ktor (`RecipeApiClient`, `DrinkApiClient`)
-  - Accès réseau : OpenFoodFacts, TheCocktailDB
-- **model/**
-  - `Recipe` : modèle pour les produits alimentaires
-  - `Drink` : modèle pour les boissons
-  - Entités Room pour les favoris (`FavoriteRecipeEntity`)
-- **repository/**
-  - `RecipeRepository` : encapsule la logique d’accès OpenFoodFacts
-  - `DrinkInfoRepository` : encapsule l’accès à l’API TheCocktailDB
-- **presentation/**
-  - `RecipeViewModel` : gestion de la liste & du détail des produits
-  - `FavoriteRecipeViewModel` : gestion des favoris
-  - `DrinkInfoViewModel` : gestion de l’appel boisson, état UI (loading / succès / erreur)
-- **presentation/screen/**
-  - `HomeScreen`
-  - `DetailScreen`
-  - `FavoritesScreen`
-  - `DrinkInfoScreen`
-- **database/**
-  - `AppDatabase`, `FavoriteRecipeDao` : persistance locale avec Room
-
-Navigation gérée avec **Navigation Compose** :
-
-- Route `home`
-- Route `detail/{id}/{name}`
-- Route `favorites`
-- Route `drinkInfo/{ingredient}`
+- 🎠 Carousel horizontal (swiper)
+- 🖼 Grande image du produit
+- 🔎 Bouton "Voir le produit"
+- 📋 Liste complète
+- 🗑 Supprimer un favori
+- Message si vide :
+  > "Aucun produit pour l'instant. Ajoutez des favoris depuis les fiches produits."
 
 ---
 
-## 🧰 Stack technique
+## 🥤 Écran boisson recommandée
 
-- **Langage** : Kotlin
-- **UI** : Jetpack Compose + Material 3
-- **Navigation** : `androidx.navigation:navigation-compose`
-- **HTTP Client** : Ktor (engine CIO)
-- **JSON** :
-  - `kotlinx.serialization` (config Ktor)
-  - `org.json.JSONObject` pour certains parsings manuels
-- **Image loading** : Coil Compose
-- **Persistence locale** : Room (DAO + Entity + Database)
-- **Architecture** :
-  - MVVM simplifié
-  - `StateFlow` pour exposer l’état UI (chargement, erreurs, données)
-  - `viewModelScope` + coroutines pour les appels réseau
+Fonctionnalités :
+
+- Nettoyage intelligent des ingrédients  
+- Mapping **FR → EN**  
+- Requête TheCocktailDB  
+- Sélection **ALÉATOIRE** d’une boisson (variation à chaque fois)  
+- Affichage : image, nom, instructions  
+- Gestion erreur : loading + message si aucune boisson trouvée
+
+---
+
+## 📡 Scanner un produit
+
+- Intégration ZXing (`journeyapps.barcodescanner`)
+- Support de :
+  - QR Code
+  - EAN-13, EAN-8
+  - UPC, Code128
+  - et bien plus
+- Le scan redirige automatiquement vers :
+detail/{code}/Produit scanné
+
+yaml
+Copier le code
+
+---
+
+## 🏗️ Architecture du projet
+
+### 📂 Structure
+
+data/
+RecipeApiClient.kt
+DrinkApiClient.kt
+model/
+Recipe.kt
+NutritionInfo.kt
+Drink.kt
+database/
+AppDatabase.kt
+FavoriteRecipeDao.kt
+repository/
+RecipeRepository.kt
+DrinkInfoRepository.kt
+presentation/
+viewmodels/
+RecipeViewModel.kt
+FavoriteRecipeViewModel.kt
+DrinkInfoViewModel.kt
+screen/
+HomeScreen.kt
+DetailScreen.kt
+FavoritesScreen.kt
+DrinkInfoScreen.kt
+
+yaml
+Copier le code
+
+### 🧠 MVVM + Flow
+
+- ViewModel pour la logique
+- StateFlow pour les états UI
+- Coroutines + Ktor pour les appels réseau
+- Room pour le stockage
+- Navigation Compose pour les écrans
+- Coil pour le chargement d’images
 
 ---
 
@@ -121,43 +132,81 @@ Navigation gérée avec **Navigation Compose** :
 
 ### 🔎 OpenFoodFacts
 
-- **Base de données ouverte** sur les produits alimentaires
-- Endpoints utilisés :
-  - Recherche :  
-    `https://fr.openfoodfacts.org/cgi/search.pl?search_terms=...&json=1&page_size=20`
-  - Détail produit :  
-    `https://fr.openfoodfacts.org/api/v2/product/{code}.json`
+- Recherche :
+https://fr.openfoodfacts.org/cgi/search.pl?search_terms=...&json=1&page_size=20
 
-[Site officiel OpenFoodFacts](https://fr.openfoodfacts.org/)
+bash
+Copier le code
+- Détail :
+https://fr.openfoodfacts.org/api/v2/product/{code}.json
+
+shell
+Copier le code
+
+### 🍹 TheCocktailDB
+
+https://www.thecocktaildb.com/api/json/v1/1/filter.php?i={ingredient}
+
+yaml
+Copier le code
+
+Logique appliquée :
+
+- Nettoyage texte
+- Mapping intelligent FR→EN
+- Sélection aléatoire
 
 ---
 
-### 🥤 TheCocktailDB
+## 🧰 Stack technique
 
-- Base de données de cocktails
-- Endpoint utilisé pour la recommandation :
-  - `https://www.thecocktaildb.com/api/json/v1/1/filter.php?i={ingredient}`
-
-Logiciel côté app :
-
-- Nettoyage de l’ingrédient (accents, parenthèses, etc.)
-- Mapping FR → EN (ex : _fraise → Strawberries_, _citron → Lemon_, _eau → Water_, etc.)
-- Choix **aléatoire** d’un cocktail parmi la liste retournée pour **éviter de toujours avoir le même**.
-
-[Site officiel TheCocktailDB](https://www.thecocktaildb.com/)
+- Kotlin
+- Jetpack Compose (Material 3)
+- Ktor HTTP client
+- kotlinx.serialization & JSONObject
+- Room (DAO + Entity + DB)
+- Navigation Compose
+- ZXing Scanner
+- Coil
+- MVVM
 
 ---
 
 ## 🚀 Installation & lancement
 
 ### 1. Prérequis
-
-- **Android Studio** (Koala ou plus récent recommandé)
-- **JDK 11**
-- **Android SDK** avec API minimum 24 (Android 7.0)
+- Android Studio (Koala ou +)
+- JDK 11
+- Min SDK 24
 
 ### 2. Cloner le projet
 
 ```bash
 git clone https://github.com/ton-compte/ton-projet.git
 cd ton-projet
+3. Installer les dépendances
+Lancer une synchronisation Gradle dans Android Studio.
+
+4. Lancer sur un appareil ou émulateur
+🧭 Navigation
+Routes disponibles :
+
+arduino
+Copier le code
+home
+detail/{id}/{name}
+favorites
+drinkInfo/{ingredient}
+🎯 Améliorations futures
+Historique des scans
+
+Mode sombre
+
+Comparateur nutritionnel
+
+Suggestions intelligentes
+
+Liste de courses générée automatiquement
+
+Badge “santé” calculé par l’algorithme
+
