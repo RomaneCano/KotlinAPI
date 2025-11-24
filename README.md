@@ -58,7 +58,7 @@ Pour chaque produit :
 - Liste des favoris en dessous :
   - image + nom  
   - bouton poubelle pour supprimer  
-- Message stylé si la liste est vide :
+- Message si la liste est vide :
   > "Aucun produit pour l'instant. Ajoutez des favoris depuis les fiches produits."
 
 ---
