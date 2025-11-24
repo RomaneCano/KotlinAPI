@@ -1,14 +1,14 @@
-# 🍊 KotlinAPI – Produits alimentaires, Scanner & Boissons recommandées
+# 🍊 KotlinAPI – Produits alimentaires, Nutri-Score, Scan & Boissons recommandées
 
 Application Android développée en **Kotlin** avec **Jetpack Compose**, permettant de :
 
 - 🔎 Rechercher des **produits alimentaires** depuis l’API **OpenFoodFacts**
-- ⭐ Gérer des **produits favoris** (persistance Room)
-- 🥤 Obtenir une **boisson recommandée** grâce à **TheCocktailDB**
-- 📸 Scanner un **QR Code ou code-barres** pour retrouver un produit instantanément
-- 🧪 Visualiser une **analyse nutritionnelle complète**
-- 🅰️ Filtrer par **Nutri-Score**
-- 🎨 Profiter d'une UI moderne **orange / jaune**, fluide et responsive
+- ⭐ Gérer une liste de **produits favoris** (persistés en local avec Room)
+- 🅰️ Filtrer les produits selon leur **Nutri-Score (A → E)**
+- 🧪 Consulter une **analyse nutritionnelle complète**
+- 📸 Scanner un **QR Code ou un code-barres** pour retrouver un produit instantanément
+- 🥤 Obtenir une **boisson recommandée** pour un produit, grâce à l’API **TheCocktailDB**
+- 📱 Naviguer entre un **écran d’accueil**, un **détail produit**, un **écran favoris** et un **écran boisson**
 
 ---
 
@@ -18,195 +18,170 @@ Application Android développée en **Kotlin** avec **Jetpack Compose**, permett
 
 ## 🏠 Écran d’accueil (Home)
 
-- Champ de recherche connecté à OpenFoodFacts  
-- Résultats avec **image + nom + Nutri-Score**  
-- Filtre Nutri-Score (A→E)  
-- **Scanner un produit** : code-barres & QR grâce à ZXing  
-- CTA : **Découvrir un produit** (aléatoire)
+- Champ de recherche filtrant les produits via OpenFoodFacts  
+- Résultats affichés sous forme de cartes :
+  - photo  
+  - nom  
+  - Nutri-Score codé couleur  
+- Filtre **Nutri-Score** (A / B / C / D / E / Tous)
+- Bouton **Scanner un produit** :
+  - lecture de **QR codes**
+  - lecture de **codes-barres** (EAN-13, EAN-8, UPC, Code 128…)
+- Bouton CTA **« Découvrir un produit »** :
+  - génère un produit **aléatoire**
 
 ---
 
 ## 📄 Écran détail produit
 
-Pour chaque produit sélectionné :
+Pour chaque produit :
 
-- 📷 Image
-- 🏷 Nom, catégories, origine
-- 🧾 Ingrédients
-- 🅰️ Nutri-Score codé couleur
-- 🧪 Analyse nutritionnelle :
-  - calories
-  - sucres
-  - graisses
-  - sel
-  - additifs
-- ⭐ Ajouter / retirer des favoris  
-- 🥤 **Boisson recommandée** → basée sur le premier ingrédient
+- 📷 Image du produit  
+- 🏷 Nom, catégorie, origine  
+- 🧾 Ingrédients  
+- 🅰️ Nutri-Score affiché avec la bonne couleur  
+- 🧪 Analyse nutritionnelle (énergie, graisses, sucres, sel, additifs…)  
+- ⭐ Bouton « Ajouter / Retirer des favoris »  
+- 🥤 Bouton **« Boisson recommandée »** :
+  - extrait le premier ingrédient  
+  - nettoyage des accents, virgules, parenthèses  
+  - mapping FR → EN  
+  - redirection vers l’écran boisson
 
 ---
 
 ## ⭐ Écran favoris
 
-- 🎠 Carousel horizontal (swiper)
-- 🖼 Grande image du produit
-- 🔎 Bouton "Voir le produit"
-- 📋 Liste complète
-- 🗑 Supprimer un favori
-- Message si vide :
+- Fond dégradé jaune/orange  
+- **Carousel horizontal** pour naviguer entre les favoris  
+- Bouton « Voir le produit »  
+- Liste des favoris en dessous :
+  - image + nom  
+  - bouton poubelle pour supprimer  
+- Message stylé si la liste est vide :
   > "Aucun produit pour l'instant. Ajoutez des favoris depuis les fiches produits."
 
 ---
 
 ## 🥤 Écran boisson recommandée
 
-Fonctionnalités :
-
-- Nettoyage intelligent des ingrédients  
-- Mapping **FR → EN**  
-- Requête TheCocktailDB  
-- Sélection **ALÉATOIRE** d’une boisson (variation à chaque fois)  
-- Affichage : image, nom, instructions  
-- Gestion erreur : loading + message si aucune boisson trouvée
-
----
-
-## 📡 Scanner un produit
-
-- Intégration ZXing (`journeyapps.barcodescanner`)
-- Support de :
-  - QR Code
-  - EAN-13, EAN-8
-  - UPC, Code128
-  - et bien plus
-- Le scan redirige automatiquement vers :
-detail/{code}/Produit scanné
-
-yaml
-Copier le code
+- Requête à TheCocktailDB
+- Transformation intelligente de l’ingrédient :  
+  - suppression des accents  
+  - retrait des parenthèses / virgules  
+  - mapping automatique FR → EN
+- Sélection **aléatoire** parmi les boissons possibles (évite d’avoir toujours la même)
+- Affichage :  
+  - nom  
+  - image  
+  - instructions  
+- Gestion des erreurs :
+  - spinner  
+  - message si aucune boisson n’est trouvée  
 
 ---
 
-## 🏗️ Architecture du projet
+## 📡 Scan QR / Code-barres
 
-### 📂 Structure
+Fonctionnalité intégrée grâce à **ZXing** :
 
-data/
-RecipeApiClient.kt
-DrinkApiClient.kt
-model/
-Recipe.kt
-NutritionInfo.kt
-Drink.kt
-database/
-AppDatabase.kt
-FavoriteRecipeDao.kt
-repository/
-RecipeRepository.kt
-DrinkInfoRepository.kt
-presentation/
-viewmodels/
-RecipeViewModel.kt
-FavoriteRecipeViewModel.kt
-DrinkInfoViewModel.kt
-screen/
-HomeScreen.kt
-DetailScreen.kt
-FavoritesScreen.kt
-DrinkInfoScreen.kt
-
-yaml
-Copier le code
-
-### 🧠 MVVM + Flow
-
-- ViewModel pour la logique
-- StateFlow pour les états UI
-- Coroutines + Ktor pour les appels réseau
-- Room pour le stockage
-- Navigation Compose pour les écrans
-- Coil pour le chargement d’images
+- Support QR Code  
+- Support barres :  
+  - EAN-13  
+  - EAN-8  
+  - UPC  
+  - Code 128  
+- Après le scan → navigation automatique vers :
 
 ---
 
-## 🌐 APIs utilisées
+## 🏗️ Architecture & organisation
 
-### 🔎 OpenFoodFacts
+L’application suit une structure claire et modulaire :
 
-- Recherche :
-https://fr.openfoodfacts.org/cgi/search.pl?search_terms=...&json=1&page_size=20
+### **data/**
+- `RecipeApiClient` → OpenFoodFacts  
+- `DrinkApiClient` → TheCocktailDB  
+- Parsing JSON (kotlinx + JSONObject)
 
-bash
-Copier le code
-- Détail :
-https://fr.openfoodfacts.org/api/v2/product/{code}.json
+### **model/**
+- `Recipe`  
+- `Drink`  
+- `NutritionInfo`  
+- Entité Room `FavoriteRecipeEntity`
 
-shell
-Copier le code
+### **database/**
+- `AppDatabase`  
+- `FavoriteRecipeDao`
 
-### 🍹 TheCocktailDB
+### **repository/**
+- `RecipeRepository`  
+- `DrinkInfoRepository`
 
-https://www.thecocktaildb.com/api/json/v1/1/filter.php?i={ingredient}
+### **presentation/**
+- `RecipeViewModel`  
+- `FavoriteRecipeViewModel`  
+- `DrinkInfoViewModel`
 
-yaml
-Copier le code
+### **presentation/screen/**
+- `HomeScreen`  
+- `DetailScreen`  
+- `FavoritesScreen`  
+- `DrinkInfoScreen`
 
-Logique appliquée :
-
-- Nettoyage texte
-- Mapping intelligent FR→EN
-- Sélection aléatoire
+### **Navigation Compose**
+- `home`  
+- `detail/{id}/{name}`  
+- `favorites`  
+- `drinkInfo/{ingredient}`
 
 ---
 
 ## 🧰 Stack technique
 
-- Kotlin
-- Jetpack Compose (Material 3)
-- Ktor HTTP client
-- kotlinx.serialization & JSONObject
-- Room (DAO + Entity + DB)
-- Navigation Compose
-- ZXing Scanner
-- Coil
-- MVVM
+- **Kotlin**
+- **Jetpack Compose** (Material 3)
+- **Navigation Compose**
+- **Room** (DAO / Entity / Database)
+- **Ktor Client**
+- **kotlinx.serialization**
+- **JSONObject** pour certains parsings
+- **Coil** pour l’affichage des images
+- **ZXing** pour le scan QR / code-barres
+- **MVVM**
+  - ViewModel + StateFlow
+  - Coroutines + viewModelScope
 
 ---
 
-## 🚀 Installation & lancement
+## 🌐 APIs utilisées
 
-### 1. Prérequis
-- Android Studio (Koala ou +)
-- JDK 11
-- Min SDK 24
+### 🔎 OpenFoodFacts  
+- Recherche  
+  `https://fr.openfoodfacts.org/cgi/search.pl?search_terms=...&json=1&page_size=20`
+- Détail  
+  `https://fr.openfoodfacts.org/api/v2/product/{code}.json`
 
-### 2. Cloner le projet
+### 🍹 TheCocktailDB  
+- Endpoint :  
+  `https://www.thecocktaildb.com/api/json/v1/1/filter.php?i={ingredient}`
 
-```bash
-git clone https://github.com/ton-compte/ton-projet.git
-cd ton-projet
-3. Installer les dépendances
-Lancer une synchronisation Gradle dans Android Studio.
+Logique interne :
+- Filtres FR → EN pour maximiser les résultats  
+- Sélection **aléatoire** de la boisson  
+- Nettoyage d’ingrédient intelligent  
 
-4. Lancer sur un appareil ou émulateur
-🧭 Navigation
-Routes disponibles :
+---
 
-arduino
-Copier le code
-home
-detail/{id}/{name}
-favorites
-drinkInfo/{ingredient}
-🎯 Améliorations futures
-Historique des scans
+## 🎯 Conclusion
 
-Mode sombre
+KotlinAPI est une application complète exploitant :
 
-Comparateur nutritionnel
-
-Suggestions intelligentes
-
-Liste de courses générée automatiquement
-
-Badge “santé” calculé par l’algorithme
+- la recherche en ligne  
+- la recommandation intelligente  
+- la persistance locale  
+- la navigation moderne  
+- le scan QR/code-barres  
+- le Nutri-Score  
+- une UI Jetpack Compose moderne  
 
